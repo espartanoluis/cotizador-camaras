@@ -5,16 +5,27 @@ import re
 # 1. Configuración de la página
 st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️")
 
-# --- ESTILO CSS PARA HACER EL BOTÓN X MÁS PEQUEÑO ---
+# --- CSS PARA REDUCIR EL BOTÓN Y SU RECUADRO ---
 st.markdown("""
     <style>
+    /* Reduce el tamaño del botón */
     div[data-testid="column"] button {
-        height: 1.5rem !important;
-        width: 1.5rem !important;
+        height: 20px !important;
+        width: 20px !important;
+        min-height: 20px !important;
+        min-width: 20px !important;
         padding: 0px !important;
         font-size: 10px !important;
         line-height: 1 !important;
-        border-radius: 5px !important;
+        border-radius: 4px !important;
+        margin-top: 5px !important;
+    }
+    
+    /* Reduce el espacio vertical entre filas del presupuesto */
+    [data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -75,24 +86,31 @@ with col2:
         st.success("¡Agregado!")
         st.rerun()
 
-# 6. Resumen con botones X pequeños
+# 6. Resumen con recuadro de X reducido
 if st.session_state.carrito:
     st.divider()
     st.header("📋 Detalle del Presupuesto")
     
+    # Encabezados
+    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.5])
+    h1.write("**Producto**")
+    h2.write("**Cant.**")
+    h3.write("**Total**")
+    h4.write("") # Espacio para la X
+
     for index, item in enumerate(st.session_state.carrito):
-        # Ajustamos el ancho de las columnas para que la X tenga poco espacio
+        # El 0.5 final hace que la columna de la X sea muy estrecha
         c1, c2, c3, c4 = st.columns([4, 1, 2, 0.5])
         with c1: st.write(item['Producto'])
-        with c2: st.write(f"x{item['Cantidad']}")
+        with c2: st.write(f"{item['Cantidad']}")
         with c3: st.write(f"S/ {item['Subtotal']:,.2f}")
         with c4:
-            # El CSS de arriba hará que este botón sea pequeño
             if st.button("❌", key=f"del_{index}"):
                 st.session_state.carrito.pop(index)
                 st.rerun()
 
     total_final = sum(item['Subtotal'] for item in st.session_state.carrito)
+    st.divider()
     st.subheader(f"Total Final: S/ {total_final:,.2f}")
     
     if st.button("🗑️ Vaciar todo"):
