@@ -1,83 +1,76 @@
 import streamlit as st
 import pandas as pd
-import re
 
-# Configuración de página
-st.set_page_config(page_title="Innovatec: Presupuestos", layout="centered")
+# 1. Configuración de la página
+st.set_page_config(page_title="Innovatec: Presupuestos", page_icon="🛡️")
 
-# FUNCIÓN MAESTRA PARA IMÁGENES DE DRIVE
-def obtener_link_directo(url):
-    if not isinstance(url, str) or "drive.google.com" not in url:
-        return None
-    try:
-        # Extrae el ID del archivo de cualquier formato de link de Drive
-        match = re.search(r'[-\w]{25,}', url)
-        if match:
-            return f"https://drive.google.com/uc?export=view&id={match.group()}"
-    except:
-        return None
-    return None
-
-# CARGAR Y LIMPIAR DATOS
-@st.cache_data
-def cargar_datos():
-    df = pd.read_csv("productos.csv")
-    # Limpia el precio eliminando "S/", comas y espacios para que no salga 0.0
-    def limpiar_precio(valor):
-        if isinstance(valor, str):
-            valor = re.sub(r'[^\d.]', '', valor)
-        try:
-            return float(valor)
-        except:
-            return 0.0
-            
-    df["Precio_Unitario"] = df["Precio_Unitario"].apply(limpiar_precio)
-    return df
-
-try:
-    df = cargar_datos()
-    st.title("🛡️ Innovatec: Presupuestos")
-
-    if 'carrito' not in st.session_state:
-        st.session_state.carrito = []
-
-    producto_sel = st.selectbox("Seleccione un producto:", df["Producto"].unique())
-    datos = df[df["Producto"] == producto_sel].iloc[0]
-
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        foto_url = obtener_link_directo(datos["Foto"])
-        if foto_url:
-            # Forzamos la visualización de la imagen
-            st.image(foto_url, width=300, caption=producto_sel)
+# 2. Función para convertir links de Drive en imágenes directas
+def convertir_enlace_drive(url):
+    if "drive.google.com" in str(url):
+        # Extraer el ID del archivo
+        if "file/d/" in url:
+            id_foto = url.split('/')[-2]
         else:
-            st.warning("⚠️ Sin imagen disponible")
+            id_foto = url.split('id=')[-1].split('&')[0]
+        # Usar el formato de thumbnail de Google que es más estable
+        return f"https://drive.google.com/thumbnail?id={id_foto}&sz=w600"
+    return url
 
-    with col2:
-        st.subheader(f"Precio: S/ {datos['Precio_Unitario']:.2f}")
-        st.info(f"**Descripción:** {datos['Descripción']}")
-        cantidad = st.number_input("Cantidad:", min_value=1, value=1, step=1)
-        
-        if st.button("🛒 Agregar al presupuesto"):
-            st.session_state.carrito.append({
-                "Producto": producto_sel,
-                "Cantidad": cantidad,
-                "Subtotal": cantidad * datos['Precio_Unitario']
-            })
-            st.success("¡Agregado!")
+# 3. Carga de datos
+# Asegúrate de que el nombre coincida exactamente con tu archivo en GitHub
+try:
+    df = pd.read_csv("productos.csv")
+except FileNotFoundError:
+    st.error("No se encontró el archivo productos.csv. Verifica el nombre en GitHub.")
+    st.stop()
 
-    if st.session_state.carrito:
-        st.divider()
-        st.subheader("📋 Resumen de Cotización")
-        resumen_df = pd.DataFrame(st.session_state.carrito)
-        st.table(resumen_df)
-        total = resumen_df["Subtotal"].sum()
-        st.header(f"Total: S/ {total:.2f}")
-        
-        if st.button("🗑️ Vaciar Carrito"):
-            st.session_state.carrito = []
-            st.rerun()
+st.title("🛡️ Innovatec: Presupuestos")
 
-except Exception as e:
-    st.error(f"Error cargando el archivo: {e}")
+# 4. Inicializar el carrito de compras
+if 'carrito' not in st.session_state:
+    st.session_state.carrito = []
+
+# 5. Selector de productos
+producto_sel = st.selectbox("Seleccione un producto:", df["Producto"].unique())
+datos = df[df["Producto"] == producto_sel].iloc[0]
+
+# 6. Mostrar Ficha Técnica
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    url_limpia = convertir_enlace_drive(datos["Foto"])
+    st.image(url_limpia, width=300, caption=producto_sel)
+
+with col2:
+    # Corrección del error de formato: convertimos a float por seguridad
+    precio_unitario = float(datos['Precio_Unitario'])
+    st.write(f"### Precio: S/ {precio_unitario:,.2f}")
+    
+    st.write(f"**Descripción:** {datos['Descripción']}")
+    cantidad = st.number_input("Cantidad:", min_value=1, value=1)
+
+if st.button("🛒 Agregar al presupuesto"):
+    item = {
+        "Producto": producto_sel,
+        "Cantidad": cantidad,
+        "Precio_Unitario": precio_unitario,
+        "Subtotal": cantidad * precio_unitario
+    }
+    st.session_state.carrito.append(item)
+    st.success(f"Agregado: {producto_sel} x{cantidad}")
+
+# 7. Resumen del Presupuesto (Aquí estaba el error de la línea 69)
+if st.session_state.carrito:
+    st.divider()
+    st.header("📋 Resumen del Presupuesto")
+    
+    # Convertir el carrito a DataFrame para mostrarlo como tabla
+    df_carrito = pd.DataFrame(st.session_state.carrito)
+    st.table(df_carrito)
+    
+    total = df_carrito["Subtotal"].sum()
+    st.subheader(f"Total Final: S/ {total:,.2f}")
+
+    if st.button("Limpiar presupuesto"):
+        st.session_state.carrito = []
+        st.rerun()
