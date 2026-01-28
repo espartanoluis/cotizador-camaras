@@ -3,7 +3,7 @@ import pandas as pd
 import re
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Innovatec j.a : Presupuestos", page_icon="🛡️")
+st.set_page_config(page_title="Innovatecj.a: Presupuestos", page_icon="🛡️")
 
 # 2. Funciones de utilidad (Imágenes y Limpieza de precios)
 def convertir_enlace_drive(url):
@@ -92,4 +92,5 @@ if st.session_state.carrito:
     if st.button("🗑️ Vaciar todo el presupuesto"):
         st.session_state.carrito = []
         st.rerun()
+
 
