@@ -5,23 +5,31 @@ import re
 # 1. Configuración de la página
 st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️")
 
-# --- CSS PARA REDUCIR EL BOTÓN Y SU RECUADRO ---
+# --- CSS ULTRA COMPACTO PARA EL BOTÓN X Y SU CONTENEDOR ---
 st.markdown("""
     <style>
-    /* Reduce el tamaño del botón */
+    /* Reducción extrema del botón X */
     div[data-testid="column"] button {
-        height: 20px !important;
-        width: 20px !important;
-        min-height: 20px !important;
-        min-width: 20px !important;
+        height: 14px !important;
+        width: 14px !important;
+        min-height: 14px !important;
+        min-width: 14px !important;
         padding: 0px !important;
-        font-size: 10px !important;
+        font-size: 8px !important; /* Texto de la X bien pequeñito */
         line-height: 1 !important;
-        border-radius: 4px !important;
-        margin-top: 5px !important;
+        border-radius: 2px !important;
+        border: 1px solid rgba(255, 75, 75, 0.5) !important;
+        color: #ff4b4b !important;
+        background-color: transparent !important;
+        margin: 0px !important;
     }
     
-    /* Reduce el espacio vertical entre filas del presupuesto */
+    /* Eliminar el padding del contenedor para que el recuadro sea mínimo */
+    [data-testid="column"] [data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
+    }
+
+    /* Alineación vertical perfecta para que no se vea desfasado */
     [data-testid="column"] {
         display: flex;
         align-items: center;
@@ -86,21 +94,21 @@ with col2:
         st.success("¡Agregado!")
         st.rerun()
 
-# 6. Resumen con recuadro de X reducido
+# 6. Resumen con botones diminutos
 if st.session_state.carrito:
     st.divider()
     st.header("📋 Detalle del Presupuesto")
     
-    # Encabezados
-    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.5])
+    # Encabezados (ajustamos el ancho de la última columna a 0.3)
+    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.3])
     h1.write("**Producto**")
     h2.write("**Cant.**")
     h3.write("**Total**")
-    h4.write("") # Espacio para la X
+    h4.write("") 
 
     for index, item in enumerate(st.session_state.carrito):
-        # El 0.5 final hace que la columna de la X sea muy estrecha
-        c1, c2, c3, c4 = st.columns([4, 1, 2, 0.5])
+        # Usamos 0.3 para que el espacio de la X sea casi invisible
+        c1, c2, c3, c4 = st.columns([4, 1, 2, 0.3])
         with c1: st.write(item['Producto'])
         with c2: st.write(f"{item['Cantidad']}")
         with c3: st.write(f"S/ {item['Subtotal']:,.2f}")
