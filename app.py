@@ -5,35 +5,44 @@ import re
 # 1. Configuración de la página
 st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️")
 
-# --- CSS ULTRA COMPACTO PARA EL BOTÓN X Y SU CONTENEDOR ---
+# --- CSS MEJORADO: CENTRADO PERFECTO Y TAMAÑO ATÓMICO ---
 st.markdown("""
     <style>
-    /* Reducción extrema del botón X */
+    /* El contenedor de la columna para centrar el contenido */
+    div[data-testid="column"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Ajuste del botón X al mínimo posible */
     div[data-testid="column"] button {
-        height: 14px !important;
-        width: 14px !important;
-        min-height: 14px !important;
-        min-width: 14px !important;
+        height: 12px !important;
+        width: 12px !important;
+        min-height: 12px !important;
+        min-width: 12px !important;
+        
+        /* Centrado del texto X dentro del botón */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        
         padding: 0px !important;
-        font-size: 8px !important; /* Texto de la X bien pequeñito */
+        font-size: 7px !important; 
         line-height: 1 !important;
+        
         border-radius: 2px !important;
-        border: 1px solid rgba(255, 75, 75, 0.5) !important;
+        border: 1px solid rgba(255, 75, 75, 0.4) !important;
         color: #ff4b4b !important;
         background-color: transparent !important;
         margin: 0px !important;
     }
-    
-    /* Eliminar el padding del contenedor para que el recuadro sea mínimo */
-    [data-testid="column"] [data-testid="stVerticalBlock"] {
-        gap: 0rem !important;
-    }
 
-    /* Alineación vertical perfecta para que no se vea desfasado */
-    [data-testid="column"] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    /* Quitar bordes de enfoque y sombras para que se vea limpio */
+    div[data-testid="column"] button:focus, 
+    div[data-testid="column"] button:active {
+        box-shadow: none !important;
+        outline: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -69,7 +78,7 @@ st.title("🛡️ Innovatec J.A: Sistema de Presupuestos")
 if 'carrito' not in st.session_state:
     st.session_state.carrito = []
 
-# 5. Selector de producto
+# 5. Selección de producto
 producto_sel = st.selectbox("Seleccione un producto:", df["Producto"].unique())
 datos = df[df["Producto"] == producto_sel].iloc[0]
 
@@ -94,26 +103,27 @@ with col2:
         st.success("¡Agregado!")
         st.rerun()
 
-# 6. Resumen con botones diminutos
+# 6. Resumen con botones de borrado atómicos
 if st.session_state.carrito:
     st.divider()
     st.header("📋 Detalle del Presupuesto")
     
-    # Encabezados (ajustamos el ancho de la última columna a 0.3)
-    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.3])
+    # Encabezados con última columna ínfima (0.2)
+    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.2])
     h1.write("**Producto**")
     h2.write("**Cant.**")
     h3.write("**Total**")
     h4.write("") 
 
     for index, item in enumerate(st.session_state.carrito):
-        # Usamos 0.3 para que el espacio de la X sea casi invisible
-        c1, c2, c3, c4 = st.columns([4, 1, 2, 0.3])
+        # El 0.2 asegura que el recuadro de la X sea casi invisible en ancho
+        c1, c2, c3, c4 = st.columns([4, 1, 2, 0.2])
         with c1: st.write(item['Producto'])
         with c2: st.write(f"{item['Cantidad']}")
         with c3: st.write(f"S/ {item['Subtotal']:,.2f}")
         with c4:
-            if st.button("❌", key=f"del_{index}"):
+            # Botón ultra pequeño
+            if st.button("x", key=f"del_{index}"):
                 st.session_state.carrito.pop(index)
                 st.rerun()
 
