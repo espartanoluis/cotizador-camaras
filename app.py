@@ -3,51 +3,53 @@ import pandas as pd
 import re
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️")
+st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️", layout="wide")
 
-# --- CSS MEJORADO: CENTRADO PERFECTO Y TAMAÑO ATÓMICO ---
+# --- CSS PARA FORZAR DISEÑO HORIZONTAL EN MÓVILES ---
 st.markdown("""
     <style>
-    /* El contenedor de la columna para centrar el contenido */
-    div[data-testid="column"] {
+    /* Forzar que las columnas del presupuesto NO se apilen en móvil */
+    [data-testid="column"] {
+        flex-direction: row !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
+        width: auto !important;
+        min-width: 0px !important;
     }
 
-    /* Ajuste del botón X al mínimo posible */
+    /* Contenedor de la fila de productos */
+    .row-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #444;
+        padding: 5px 0px;
+    }
+
+    /* Botón X minúsculo y sin márgenes */
     div[data-testid="column"] button {
-        height: 12px !important;
-        width: 12px !important;
-        min-height: 12px !important;
-        min-width: 12px !important;
-        
-        /* Centrado del texto X dentro del botón */
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        
+        height: 18px !important;
+        width: 18px !important;
+        min-height: 18px !important;
+        min-width: 18px !important;
         padding: 0px !important;
-        font-size: 7px !important; 
-        line-height: 1 !important;
-        
-        border-radius: 2px !important;
-        border: 1px solid rgba(255, 75, 75, 0.4) !important;
-        color: #ff4b4b !important;
-        background-color: transparent !important;
         margin: 0px !important;
+        font-size: 9px !important;
+        border-radius: 50% !important; /* Circular para que ocupe menos espacio visual */
+        border: 1px solid rgba(255, 75, 75, 0.5) !important;
+        background-color: transparent !important;
+        color: #ff4b4b !important;
     }
 
-    /* Quitar bordes de enfoque y sombras para que se vea limpio */
-    div[data-testid="column"] button:focus, 
-    div[data-testid="column"] button:active {
-        box-shadow: none !important;
-        outline: none !important;
-    }
+    /* Estilo para los textos del presupuesto para que no se corten */
+    .product-text { font-size: 14px; font-weight: 500; }
+    .price-text { font-size: 14px; color: #00ff00; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Funciones de utilidad
+# 2. Funciones de utilidad (Drive y Precios)
 def convertir_enlace_drive(url):
     if pd.isna(url) or str(url).lower() == "nan": return None
     url_str = str(url)
@@ -73,61 +75,60 @@ except FileNotFoundError:
     st.error("⚠️ No se encontró el archivo 'productos.csv'.")
     st.stop()
 
-st.title("🛡️ Innovatec J.A: Sistema de Presupuestos")
+st.title("🛡️ Innovatec J.A")
 
 if 'carrito' not in st.session_state:
     st.session_state.carrito = []
 
-# 5. Selección de producto
+# 4. Selección de producto
 producto_sel = st.selectbox("Seleccione un producto:", df["Producto"].unique())
 datos = df[df["Producto"] == producto_sel].iloc[0]
 
-col1, col2 = st.columns([1, 1])
-with col1:
+c_img, c_det = st.columns([1, 1])
+with c_img:
     url_limpia = convertir_enlace_drive(datos["Foto"])
-    if url_limpia: st.image(url_limpia, width=300)
+    if url_limpia: st.image(url_limpia, width=250)
 
-with col2:
+with c_det:
     precio_unitario = limpiar_precio(datos['Precio_Unitario'])
-    st.write(f"### Precio: S/ {precio_unitario:,.2f}")
-    st.write(f"**Descripción:** {datos['Descripción']}")
+    st.subheader(f"S/ {precio_unitario:,.2f}")
+    st.write(f"{datos['Descripción']}")
     cantidad = st.number_input("Cantidad:", min_value=1, value=1)
-    
-    if st.button("🛒 Agregar al presupuesto"):
+    if st.button("🛒 Agregar"):
         st.session_state.carrito.append({
             "Producto": producto_sel,
             "Cantidad": cantidad,
-            "Precio_Unitario": precio_unitario,
+            "Precio": precio_unitario,
             "Subtotal": cantidad * precio_unitario
         })
-        st.success("¡Agregado!")
         st.rerun()
 
-# 6. Resumen con botones de borrado atómicos
+# 5. RESUMEN HORIZONTAL (Incluso en móviles)
 if st.session_state.carrito:
     st.divider()
-    st.header("📋 Detalle del Presupuesto")
+    st.markdown("### 📋 Resumen del Presupuesto")
     
-    # Encabezados con última columna ínfima (0.2)
-    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.2])
-    h1.write("**Producto**")
-    h2.write("**Cant.**")
-    h3.write("**Total**")
-    h4.write("") 
+    # Encabezado Manual (Fila única)
+    # Proporciones: [Producto, Cant, Total, X] -> [5, 1, 2, 0.5]
+    h1, h2, h3, h4 = st.columns([5, 1.5, 2.5, 0.8])
+    h1.caption("**Producto**")
+    h2.caption("**Cant.**")
+    h3.caption("**Total**")
+    h4.caption("")
 
     for index, item in enumerate(st.session_state.carrito):
-        # El 0.2 asegura que el recuadro de la X sea casi invisible en ancho
-        c1, c2, c3, c4 = st.columns([4, 1, 2, 0.2])
-        with c1: st.write(item['Producto'])
-        with c2: st.write(f"{item['Cantidad']}")
-        with c3: st.write(f"S/ {item['Subtotal']:,.2f}")
-        with c4:
-            # Botón ultra pequeño
+        # Cada producto es una fila de columnas que NO se apilan
+        col_p, col_c, col_t, col_x = st.columns([5, 1.5, 2.5, 0.8])
+        
+        with col_p: st.markdown(f"<span class='product-text'>{item['Producto']}</span>", unsafe_allow_html=True)
+        with col_c: st.write(f"x{item['Cantidad']}")
+        with c_t := col_t: st.markdown(f"<span class='price-text'>S/ {item['Subtotal']:,.2f}</span>", unsafe_allow_html=True)
+        with col_x:
             if st.button("x", key=f"del_{index}"):
                 st.session_state.carrito.pop(index)
                 st.rerun()
 
-    total_final = sum(item['Subtotal'] for item in st.session_state.carrito)
+    total_final = sum(i['Subtotal'] for i in st.session_state.carrito)
     st.divider()
     st.subheader(f"Total Final: S/ {total_final:,.2f}")
     
