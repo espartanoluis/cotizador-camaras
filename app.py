@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 
-# Configuración de la página
+# Configuración básica
 st.set_page_config(page_title="Innovatec: Presupuestos", layout="centered")
 
-# Función mejorada para las fotos de Drive
+# Función para limpiar enlaces de Drive
 def convertir_enlace_drive(url):
     try:
         if "drive.google.com" in str(url):
@@ -15,12 +15,15 @@ def convertir_enlace_drive(url):
             return f"https://drive.google.com/uc?export=view&id={id_foto}"
         return url
     except:
-        return "https://via.placeholder.com/300?text=Error+en+Enlace"
+        return "https://via.placeholder.com/300?text=Sin+Imagen"
 
 # Cargar datos
 @st.cache_data
 def cargar_datos():
-    return pd.read_csv("productos.csv")
+    df = pd.read_csv("productos.csv")
+    # Aseguramos que el precio sea número
+    df["Precio_Unitario"] = pd.to_numeric(df["Precio_Unitario"], errors='coerce').fillna(0)
+    return df
 
 try:
     df = cargar_datos()
@@ -39,7 +42,8 @@ try:
         st.image(url_limpia, width=300)
 
     with col2:
-        st.write(f"### Precio: S/ {datos['Precio_Unitario']:.2f}")
+        precio = datos['Precio_Unitario']
+        st.subheader(f"Precio: S/ {precio}")
         st.write(f"**Descripción:** {datos['Descripción']}")
         cantidad = st.number_input("Cantidad:", min_value=1, value=1)
         
@@ -47,7 +51,7 @@ try:
             st.session_state.carrito.append({
                 "Producto": producto_sel,
                 "Cantidad": cantidad,
-                "Subtotal": cantidad * datos["Precio_Unitario"]
+                "Subtotal": cantidad * precio
             })
             st.success("¡Añadido!")
 
@@ -58,12 +62,11 @@ try:
         st.table(resumen_df)
         
         total = resumen_df["Subtotal"].sum()
-        # LÍNEA CORREGIDA AQUÍ ABAJO
-        st.header(f"Total a Pagar: S/ {total:.2f}")
+        st.header(f"Total: S/ {total}")
         
-        if st.button("🗑️ Vaciar Presupuesto"):
+        if st.button("🗑️ Vaciar Todo"):
             st.session_state.carrito = []
             st.rerun()
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Asegúrate de que el archivo se llame productos.csv y no tenga errores. Error: {e}")
