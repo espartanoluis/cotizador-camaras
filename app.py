@@ -5,51 +5,39 @@ import re
 # 1. Configuración de la página
 st.set_page_config(page_title="Innovatec J.A", page_icon="🛡️", layout="wide")
 
-# --- CSS PARA FORZAR DISEÑO HORIZONTAL EN MÓVILES ---
+# --- CSS PARA FORZAR DISEÑO HORIZONTAL Y BOTÓN X MINÚSCULO ---
 st.markdown("""
     <style>
-    /* Forzar que las columnas del presupuesto NO se apilen en móvil */
+    /* Forzar que las columnas NO se apilen en móviles */
     [data-testid="column"] {
-        flex-direction: row !important;
         display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: flex-start !important;
         width: auto !important;
-        min-width: 0px !important;
     }
 
-    /* Contenedor de la fila de productos */
-    .row-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #444;
-        padding: 5px 0px;
-    }
-
-    /* Botón X minúsculo y sin márgenes */
+    /* Botón X atómico y centrado */
     div[data-testid="column"] button {
-        height: 18px !important;
-        width: 18px !important;
-        min-height: 18px !important;
-        min-width: 18px !important;
+        height: 12px !important;
+        width: 12px !important;
+        min-height: 12px !important;
+        min-width: 12px !important;
         padding: 0px !important;
-        margin: 0px !important;
-        font-size: 9px !important;
-        border-radius: 50% !important; /* Circular para que ocupe menos espacio visual */
-        border: 1px solid rgba(255, 75, 75, 0.5) !important;
-        background-color: transparent !important;
+        font-size: 7px !important;
+        line-height: 1 !important;
+        border-radius: 2px !important;
+        border: 1px solid rgba(255, 75, 75, 0.4) !important;
         color: #ff4b4b !important;
+        background-color: transparent !important;
     }
 
-    /* Estilo para los textos del presupuesto para que no se corten */
-    .product-text { font-size: 14px; font-weight: 500; }
-    .price-text { font-size: 14px; color: #00ff00; }
+    /* Ajuste de texto para que quepa todo en una línea */
+    .table-text { font-size: 13px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Funciones de utilidad (Drive y Precios)
+# 2. Funciones de utilidad
 def convertir_enlace_drive(url):
     if pd.isna(url) or str(url).lower() == "nan": return None
     url_str = str(url)
@@ -84,17 +72,17 @@ if 'carrito' not in st.session_state:
 producto_sel = st.selectbox("Seleccione un producto:", df["Producto"].unique())
 datos = df[df["Producto"] == producto_sel].iloc[0]
 
-c_img, c_det = st.columns([1, 1])
-with c_img:
+c1, c2 = st.columns([1, 1])
+with c1:
     url_limpia = convertir_enlace_drive(datos["Foto"])
-    if url_limpia: st.image(url_limpia, width=250)
+    if url_limpia: st.image(url_limpia, width=280)
 
-with c_det:
+with c2:
     precio_unitario = limpiar_precio(datos['Precio_Unitario'])
-    st.subheader(f"S/ {precio_unitario:,.2f}")
-    st.write(f"{datos['Descripción']}")
+    st.write(f"### S/ {precio_unitario:,.2f}")
+    st.write(f"**Descripción:** {datos['Descripción']}")
     cantidad = st.number_input("Cantidad:", min_value=1, value=1)
-    if st.button("🛒 Agregar"):
+    if st.button("🛒 Agregar al presupuesto"):
         st.session_state.carrito.append({
             "Producto": producto_sel,
             "Cantidad": cantidad,
@@ -103,26 +91,25 @@ with c_det:
         })
         st.rerun()
 
-# 5. RESUMEN HORIZONTAL (Incluso en móviles)
+# 5. RESUMEN HORIZONTAL (Corregido para móviles)
 if st.session_state.carrito:
     st.divider()
-    st.markdown("### 📋 Resumen del Presupuesto")
+    st.header("📋 Detalle del Presupuesto")
     
-    # Encabezado Manual (Fila única)
-    # Proporciones: [Producto, Cant, Total, X] -> [5, 1, 2, 0.5]
-    h1, h2, h3, h4 = st.columns([5, 1.5, 2.5, 0.8])
-    h1.caption("**Producto**")
-    h2.caption("**Cant.**")
-    h3.caption("**Total**")
-    h4.caption("")
+    # Encabezados - Usamos proporciones muy precisas
+    h1, h2, h3, h4 = st.columns([4, 1, 2, 0.3])
+    h1.write("**Producto**")
+    h2.write("**Cant.**")
+    h3.write("**Total**")
+    h4.write("")
 
     for index, item in enumerate(st.session_state.carrito):
-        # Cada producto es una fila de columnas que NO se apilan
-        col_p, col_c, col_t, col_x = st.columns([5, 1.5, 2.5, 0.8])
+        # Creamos las filas. Eliminamos el error de la Captura 60 aquí:
+        col_p, col_c, col_t, col_x = st.columns([4, 1, 2, 0.3])
         
-        with col_p: st.markdown(f"<span class='product-text'>{item['Producto']}</span>", unsafe_allow_html=True)
-        with col_c: st.write(f"x{item['Cantidad']}")
-        with c_t := col_t: st.markdown(f"<span class='price-text'>S/ {item['Subtotal']:,.2f}</span>", unsafe_allow_html=True)
+        with col_p: st.markdown(f"<div class='table-text'>{item['Producto']}</div>", unsafe_allow_html=True)
+        with col_c: st.markdown(f"<div class='table-text'>{item['Cantidad']}</div>", unsafe_allow_html=True)
+        with col_t: st.markdown(f"<div class='table-text'>S/ {item['Subtotal']:,.2f}</div>", unsafe_allow_html=True)
         with col_x:
             if st.button("x", key=f"del_{index}"):
                 st.session_state.carrito.pop(index)
