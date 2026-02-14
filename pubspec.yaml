@@ -1,0 +1,39 @@
+name: wislla
+description: "A new Flutter project for Wislla App."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Iconos de Cupertino para iOS
+  cupertino_icons: ^1.0.6
+
+  # Mapas y Ubicación
+  google_maps_flutter: ^2.5.3
+  geolocator: ^10.1.0
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
+  flutter_test:
+    sdk: flutter
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo_v2.png"
+
+
+flutter:
+  uses-material-design: true
+
+  # SECCIÓN DE ACTIVOS (Imágenes y Animaciones)
+  # Asegúrate de que los archivos existan en tu carpeta assets/
+  assets:
+    - assets/logo_v2.png
+    - assets/logo_animado.gif
